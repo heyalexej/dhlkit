@@ -17,7 +17,7 @@ jobs:
           enable-cache: true
           python-version: "3.12"
       - run: uv sync --all-extras
-      - run: uv run python -m dhlkit._gen --check
+      - run: uv run python scripts/gen_models.py --check
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run ty check src tests

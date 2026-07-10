@@ -1,10 +1,10 @@
 set shell := ["zsh", "-cu"]
 
 gen:
-    uv run python -m dhlkit._gen
+    uv run python scripts/gen_models.py
 
 gen-check:
-    uv run python -m dhlkit._gen --check
+    uv run python scripts/gen_models.py --check
 
 lint:
     uv run ruff check .

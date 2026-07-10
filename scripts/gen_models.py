@@ -1,3 +1,11 @@
+"""Regenerate dhlkit's Pydantic models from the committed DHL OpenAPI specs.
+
+Development tool; run in the project environment via ``uv run python
+scripts/gen_models.py`` (add ``--check`` to fail on drift). It needs the dev
+dependencies (datamodel-code-generator, pyyaml) and the ``specs/`` inputs, so it
+lives outside the shipped package.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -11,7 +19,7 @@ from typing import Any
 
 import yaml
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 SPECS = {
     "auth-ropc.yaml": "auth.py",
     "pickup-v3.yaml": "pickup.py",
