@@ -13,6 +13,7 @@ from dhlkit.config import DhlConfig
 from dhlkit.errors import DhlAPIError
 from dhlkit.models import DhlModel
 from dhlkit.resource import AsyncResource, Resource
+from dhlkit.transport import AsyncDhlTransport, DhlTransport
 
 
 class LegacyXmlNode(BaseXmlModel, tag="data", search_mode=SearchMode.UNORDERED):
@@ -86,12 +87,12 @@ class LegacyTrackingResource(Resource):
 
     def __init__(
         self,
-        client: object,
+        transport: DhlTransport,
         auth: AuthStrategy,
         base_url: str,
         config: DhlConfig,
     ) -> None:
-        super().__init__(client, auth, base_url)
+        super().__init__(transport, auth, base_url)
         self._config = config
 
     def track(
@@ -129,12 +130,12 @@ class AsyncLegacyTrackingResource(AsyncResource):
 
     def __init__(
         self,
-        client: object,
+        transport: AsyncDhlTransport,
         auth: AuthStrategy,
         base_url: str,
         config: DhlConfig,
     ) -> None:
-        super().__init__(client, auth, base_url)
+        super().__init__(transport, auth, base_url)
         self._config = config
 
     async def track(
