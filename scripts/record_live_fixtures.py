@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 import html
 import json
-import os
 import re
 from collections import Counter
 from datetime import UTC, datetime, timedelta
@@ -110,8 +109,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _config() -> DhlConfig:
-    names = ("DHL_API_KEY", "DHL_API_SECRET", "DHL_GKP_USER", "DHL_GKP_PASSWORD")
-    return DhlConfig.from_env() if all(os.getenv(name) for name in names) else DhlConfig.from_file()
+    return DhlConfig.resolve()
 
 
 def _numbers(primary: Path, foreign: Path | None) -> list[str]:

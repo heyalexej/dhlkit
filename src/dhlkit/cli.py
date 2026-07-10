@@ -53,15 +53,7 @@ def track(tracking_number: str, unified: bool = False) -> None:
 
 
 def _config() -> DhlConfig:
-    return DhlConfig.from_file() if _has_file_config() else DhlConfig.from_env()
-
-
-def _has_file_config() -> bool:
-    try:
-        DhlConfig.from_file()
-    except Exception:  # Config loading falls back to the documented environment source.
-        return False
-    return True
+    return DhlConfig.resolve()
 
 
 if __name__ == "__main__":

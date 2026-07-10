@@ -12,6 +12,8 @@ from .errors import DhlConfigError
 
 DEFAULT_TIMEOUT = 30.0
 
+_CREDENTIAL_ENV_VARS = ("DHL_API_KEY", "DHL_API_SECRET", "DHL_GKP_USER", "DHL_GKP_PASSWORD")
+
 
 class DhlConfig(BaseSettings):
     """Credentials and transport settings for DHL Parcel DE.
@@ -62,6 +64,24 @@ class DhlConfig(BaseSettings):
             names = ", ".join(sorted(unknown))
             raise DhlConfigError(f"Unknown DHL config field(s): {names}")
         return cls.model_validate(payload)
+
+    @classmethod
+    def resolve(cls, path: str | Path | None = None) -> DhlConfig:
+        """Load configuration, preferring a complete environment over the file.
+
+        When all four ``DHL_*`` credentials are set in the environment, use the
+        environment; otherwise fall back to the XDG JSON credential file. A
+        missing file falls back to the environment (whose missing-credential
+        errors are the most actionable), while a present but unreadable file —
+        wrong permissions, malformed JSON, unknown keys — raises
+        :class:`DhlConfigError` instead of being silently ignored.
+        """
+        if all(os.getenv(name) for name in _CREDENTIAL_ENV_VARS):
+            return cls.from_env()
+        config_path = Path(path).expanduser() if path is not None else _default_config_path()
+        if config_path.is_file():
+            return cls.from_file(config_path)
+        return cls.from_env()
 
     @property
     def token_url(self) -> str:
