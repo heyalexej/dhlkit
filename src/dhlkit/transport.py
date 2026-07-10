@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging as stdlib_logging
 import time
 from collections.abc import Callable, Mapping
+from functools import cache
 from typing import Any
 from urllib.parse import quote
 
@@ -239,7 +240,14 @@ def _handle_response(
     payload = orjson.loads(response.content)
     if response_model is None:
         return payload
-    return TypeAdapter(response_model).validate_python(payload)
+    return _adapter(response_model).validate_python(payload)
+
+
+@cache
+def _adapter(response_model: Any) -> TypeAdapter[Any]:
+    # Compiling a TypeAdapter builds a validator; reuse one per response type
+    # instead of rebuilding it on every response.
+    return TypeAdapter(response_model)
 
 
 def _log_response(

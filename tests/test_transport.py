@@ -117,6 +117,13 @@ def test_transport_error_retried_for_idempotent_get(config, fixture_bytes) -> No
     assert calls == 2
 
 
+def test_response_adapter_is_cached_per_type() -> None:
+    from dhlkit.generated.models.pickup import PickupLocationId
+    from dhlkit.transport import _adapter
+
+    assert _adapter(list[PickupLocationId]) is _adapter(list[PickupLocationId])
+
+
 def test_injected_http_client_remains_open(config, fixture_bytes) -> None:
     def handler(_request: httpx.Request) -> httpx.Response:
         return httpx.Response(

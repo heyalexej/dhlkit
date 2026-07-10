@@ -33,6 +33,8 @@ class RopcBearerAuth:
         self._clock = clock
         self._sync_lock = threading.Lock()
         self._async_lock = asyncio.Lock()
+        self._memo: CachedToken | None = None
+        self._key: str | None = None
 
     def headers(self, client: httpx.Client) -> dict[str, str]:
         return {"Authorization": f"Bearer {self._access_token(client)}"}
@@ -41,6 +43,7 @@ class RopcBearerAuth:
         return {"Authorization": f"Bearer {await self._access_token_async(client)}"}
 
     def invalidate(self) -> None:
+        self._memo = None
         self._cache.clear(self._cache_key())
 
     def _access_token(self, client: httpx.Client) -> str:
@@ -62,10 +65,17 @@ class RopcBearerAuth:
             return (await self._mint_async(client)).access_token
 
     def _valid_cached_token(self) -> CachedToken | None:
+        memo = self._memo
+        if memo is not None and not self._is_expired(memo):
+            return memo
         token = self._cache.get(self._cache_key())
-        if token is None or token.expires_at <= self._clock() + _EXPIRY_SKEW_SECONDS:
+        if token is None or self._is_expired(token):
             return None
+        self._memo = token
         return token
+
+    def _is_expired(self, token: CachedToken) -> bool:
+        return token.expires_at <= self._clock() + _EXPIRY_SKEW_SECONDS
 
     def _mint(self, client: httpx.Client) -> CachedToken:
         response = client.post(
@@ -102,6 +112,7 @@ class RopcBearerAuth:
             access_token=access_token,
             expires_at=self._clock() + float(expires_in),
         )
+        self._memo = token
         self._cache.set(self._cache_key(), token)
         return token
 
@@ -115,5 +126,7 @@ class RopcBearerAuth:
         }
 
     def _cache_key(self) -> str:
-        material = f"{self._config.token_url}\0{self._config.require_api_key()}".encode()
-        return hashlib.sha256(material).hexdigest()
+        if self._key is None:
+            material = f"{self._config.token_url}\0{self._config.require_api_key()}".encode()
+            self._key = hashlib.sha256(material).hexdigest()
+        return self._key
