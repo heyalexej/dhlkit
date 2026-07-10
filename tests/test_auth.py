@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 import httpx
+import pytest
 
 from dhlkit.auth import (
     ApiKeyHeaderAuth,
@@ -29,6 +30,31 @@ def test_apikey_auth_has_only_lowercase_header(config) -> None:
     transport = httpx.MockTransport(lambda _request: httpx.Response(200))
     with httpx.Client(transport=transport) as client:
         assert auth.headers(client) == {"dhl-api-key": "test-api-key"}
+
+
+@pytest.mark.anyio
+async def test_basic_auth_sync_and_async_headers_match(config) -> None:
+    auth = BasicKeySecretAuth(config)
+    transport = httpx.MockTransport(lambda _request: httpx.Response(200))
+    with httpx.Client(transport=transport) as client:
+        sync_headers = auth.headers(client)
+    async with httpx.AsyncClient(transport=transport) as aclient:
+        async_headers = await auth.headers_async(aclient)
+
+    assert sync_headers == async_headers
+    assert async_headers["DHL-API-Key"] == "test-api-key"
+
+
+@pytest.mark.anyio
+async def test_apikey_auth_sync_and_async_headers_match(config) -> None:
+    auth = ApiKeyHeaderAuth(config)
+    transport = httpx.MockTransport(lambda _request: httpx.Response(200))
+    with httpx.Client(transport=transport) as client:
+        sync_headers = auth.headers(client)
+    async with httpx.AsyncClient(transport=transport) as aclient:
+        async_headers = await auth.headers_async(aclient)
+
+    assert sync_headers == async_headers == {"dhl-api-key": "test-api-key"}
 
 
 def test_ropc_cache_and_expiry(config) -> None:

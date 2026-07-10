@@ -13,11 +13,14 @@ class ApiKeyHeaderAuth:
     def __init__(self, config: DhlConfig) -> None:
         self._config = config
 
-    def headers(self, client: httpx.Client) -> dict[str, str]:
+    def _headers(self) -> dict[str, str]:
         return {"dhl-api-key": self._config.require_api_key()}
 
+    def headers(self, client: httpx.Client) -> dict[str, str]:
+        return self._headers()
+
     async def headers_async(self, client: httpx.AsyncClient) -> dict[str, str]:
-        return {"dhl-api-key": self._config.require_api_key()}
+        return self._headers()
 
     def invalidate(self) -> None:
         return None
