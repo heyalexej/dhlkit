@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -72,7 +73,7 @@ def main() -> None:
             )
             destination = GENERATED / output_name
             current = destination.read_text(encoding="utf-8") if destination.exists() else None
-            rendered = generated.read_text(encoding="utf-8")
+            rendered = _resolve_enum_repr_defaults(generated.read_text(encoding="utf-8"))
             if current != rendered:
                 changed.append(output_name)
                 if not args.check:
@@ -103,6 +104,35 @@ def _model_only_spec(path: Path) -> dict[str, Any]:
                 if isinstance(operation, dict):
                     operation.pop("security", None)
     return payload
+
+
+_ENUM_CLASS = re.compile(r"class (\w+)\(RootModel\[Literal\[([^\]]*)\]\]\)")
+_QUOTED = re.compile(r"'([^']*)'")
+_MEMBER_REPR = re.compile(r"'(\w+)\.(\w+)'")
+
+
+def _resolve_enum_repr_defaults(source: str) -> str:
+    """Repair enum defaults emitted as their Python member repr.
+
+    datamodel-code-generator occasionally renders an enum-valued default as the
+    member repr (``SecretPolicy.POSTAL_CODE``) instead of the wire value
+    (``postal-code``). With ``validate_default=True`` that default fails to
+    validate against the field's ``Literal`` and the model cannot be
+    constructed. Rewrite each such repr back to the literal value using the
+    enum's own declared members; unknown reprs are left untouched so a new leak
+    surfaces via ``--check`` rather than being silently mangled.
+    """
+    members: dict[tuple[str, str], str] = {}
+    for enum_name, literal_body in _ENUM_CLASS.findall(source):
+        for value in _QUOTED.findall(literal_body):
+            member = re.sub(r"\W", "_", value).upper()
+            members[(enum_name, member)] = value
+
+    def replace(match: re.Match[str]) -> str:
+        value = members.get((match.group(1), match.group(2)))
+        return f"'{value}'" if value is not None else match.group(0)
+
+    return _MEMBER_REPR.sub(replace, source)
 
 
 if __name__ == "__main__":
