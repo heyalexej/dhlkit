@@ -4,13 +4,14 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from .auth.base import AuthStrategy
+from .transport import AsyncDhlTransport, DhlTransport
 
 
 class Resource:
     base_url: str
 
-    def __init__(self, client: Any, auth: AuthStrategy, base_url: str) -> None:
-        self._client = client
+    def __init__(self, transport: DhlTransport, auth: AuthStrategy, base_url: str) -> None:
+        self._transport = transport
         self._auth = auth
         self.base_url = base_url
 
@@ -28,7 +29,7 @@ class Resource:
         response_parser: Callable[[bytes], Any] | None = None,
         accepted_statuses: set[int] | None = None,
     ) -> Any:
-        return self._client._request(
+        return self._transport.request(
             auth=self._auth,
             base_url=self.base_url,
             operation=operation,
@@ -47,8 +48,8 @@ class Resource:
 class AsyncResource:
     base_url: str
 
-    def __init__(self, client: Any, auth: AuthStrategy, base_url: str) -> None:
-        self._client = client
+    def __init__(self, transport: AsyncDhlTransport, auth: AuthStrategy, base_url: str) -> None:
+        self._transport = transport
         self._auth = auth
         self.base_url = base_url
 
@@ -66,7 +67,7 @@ class AsyncResource:
         response_parser: Callable[[bytes], Any] | None = None,
         accepted_statuses: set[int] | None = None,
     ) -> Any:
-        return await self._client._request(
+        return await self._transport.request(
             auth=self._auth,
             base_url=self.base_url,
             operation=operation,

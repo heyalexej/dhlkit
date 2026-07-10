@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
 from types import TracebackType
-from typing import Any, Self
+from typing import Self
 
 import httpx
 
 from .auth import (
     ApiKeyHeaderAuth,
-    AuthStrategy,
     BasicKeySecretAuth,
     FileTokenCache,
     RopcBearerAuth,
@@ -48,47 +46,18 @@ class DhlClient:
         bearer = RopcBearerAuth(self.config, token_cache or FileTokenCache())
         legacy_auth = BasicKeySecretAuth(self.config)
         unified_auth = ApiKeyHeaderAuth(self.config)
-        self.pickup = PickupResource(self, bearer, self.config.pickup_url)
-        self.postnumber = PostnumberResource(self, bearer, self.config.postnumber_url)
+        self.pickup = PickupResource(self._transport, bearer, self.config.pickup_url)
+        self.postnumber = PostnumberResource(self._transport, bearer, self.config.postnumber_url)
         self.tracking = TrackingResource(
             LegacyTrackingResource(
-                self,
+                self._transport,
                 legacy_auth,
                 self.config.legacy_tracking_url,
                 self.config,
             ),
-            UnifiedTrackingResource(self, unified_auth, self.config.unified_tracking_url),
-        )
-
-    def _request(
-        self,
-        *,
-        auth: AuthStrategy,
-        base_url: str,
-        operation: str,
-        method: str,
-        path: str,
-        path_params: Mapping[str, Any] | None = None,
-        params: Mapping[str, Any] | None = None,
-        headers: Mapping[str, str] | None = None,
-        body: Any = None,
-        response_model: Any = None,
-        response_parser: Callable[[bytes], Any] | None = None,
-        accepted_statuses: set[int] | None = None,
-    ) -> Any:
-        return self._transport.request(
-            auth=auth,
-            base_url=base_url,
-            operation=operation,
-            method=method,
-            path=path,
-            path_params=path_params,
-            params=params,
-            headers=headers,
-            body=body,
-            response_model=response_model,
-            response_parser=response_parser,
-            accepted_statuses=accepted_statuses,
+            UnifiedTrackingResource(
+                self._transport, unified_auth, self.config.unified_tracking_url
+            ),
         )
 
     def close(self) -> None:
@@ -127,47 +96,20 @@ class AsyncDhlClient:
         bearer = RopcBearerAuth(self.config, token_cache or FileTokenCache())
         legacy_auth = BasicKeySecretAuth(self.config)
         unified_auth = ApiKeyHeaderAuth(self.config)
-        self.pickup = AsyncPickupResource(self, bearer, self.config.pickup_url)
-        self.postnumber = AsyncPostnumberResource(self, bearer, self.config.postnumber_url)
+        self.pickup = AsyncPickupResource(self._transport, bearer, self.config.pickup_url)
+        self.postnumber = AsyncPostnumberResource(
+            self._transport, bearer, self.config.postnumber_url
+        )
         self.tracking = AsyncTrackingResource(
             AsyncLegacyTrackingResource(
-                self,
+                self._transport,
                 legacy_auth,
                 self.config.legacy_tracking_url,
                 self.config,
             ),
-            AsyncUnifiedTrackingResource(self, unified_auth, self.config.unified_tracking_url),
-        )
-
-    async def _request(
-        self,
-        *,
-        auth: AuthStrategy,
-        base_url: str,
-        operation: str,
-        method: str,
-        path: str,
-        path_params: Mapping[str, Any] | None = None,
-        params: Mapping[str, Any] | None = None,
-        headers: Mapping[str, str] | None = None,
-        body: Any = None,
-        response_model: Any = None,
-        response_parser: Callable[[bytes], Any] | None = None,
-        accepted_statuses: set[int] | None = None,
-    ) -> Any:
-        return await self._transport.request(
-            auth=auth,
-            base_url=base_url,
-            operation=operation,
-            method=method,
-            path=path,
-            path_params=path_params,
-            params=params,
-            headers=headers,
-            body=body,
-            response_model=response_model,
-            response_parser=response_parser,
-            accepted_statuses=accepted_statuses,
+            AsyncUnifiedTrackingResource(
+                self._transport, unified_auth, self.config.unified_tracking_url
+            ),
         )
 
     async def aclose(self) -> None:
