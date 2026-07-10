@@ -277,7 +277,7 @@ class Organization(DhlModel):
     ] = 'Organization'
     field_policy: Annotated[
         SecretPolicy | None, Field(alias='@policy', validate_default=True)
-    ] = 'SecretPolicy.POSTAL_CODE'
+    ] = 'postal-code'
     name: Annotated[
         str | None,
         Field(description='The name of the person', examples=['Linford Alene']),
@@ -299,7 +299,7 @@ class Company(DhlModel):
     ] = 'Company'
     field_policy: Annotated[
         SecretPolicy | None, Field(alias='@policy', validate_default=True)
-    ] = 'SecretPolicy.POSTAL_CODE'
+    ] = 'postal-code'
     name: Annotated[
         str | None,
         Field(description='The name of the person', examples=['Linford Alene']),
@@ -321,7 +321,7 @@ class Person(DhlModel):
     ] = 'Person'
     field_policy: Annotated[
         SecretPolicy | None, Field(alias='@policy', validate_default=True)
-    ] = 'SecretPolicy.POSTAL_CODE'
+    ] = 'postal-code'
     family_name: Annotated[
         str | None,
         Field(alias='familyName', description='Family name, the last name of a person'),
