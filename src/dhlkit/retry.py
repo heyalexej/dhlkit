@@ -8,7 +8,7 @@ from tenacity import (
     AsyncRetrying,
     RetryCallState,
     Retrying,
-    retry_if_exception_type,
+    retry_if_exception,
     retry_if_result,
     stop_after_attempt,
     wait_random_exponential,
@@ -25,6 +25,13 @@ def should_retry_response(method: str, response: httpx.Response) -> bool:
     return response.status_code in {500, 502, 503, 504} and method.upper() in _IDEMPOTENT_METHODS
 
 
+def should_retry_exception(method: str, exception: BaseException) -> bool:
+    # A transport error may fire after the request reached the server (e.g. a
+    # read timeout), so only retry it for idempotent methods. Retrying a POST
+    # (pickup.create) would risk creating a duplicate order.
+    return isinstance(exception, httpx.TransportError) and method.upper() in _IDEMPOTENT_METHODS
+
+
 def run_with_retry(
     operation: Callable[[], httpx.Response],
     *,
@@ -37,7 +44,7 @@ def run_with_retry(
             multiplier=config.retry_backoff,
             max=config.retry_max_backoff,
         ),
-        retry=retry_if_exception_type(httpx.TransportError)
+        retry=retry_if_exception(lambda exc: should_retry_exception(method, exc))
         | retry_if_result(lambda response: should_retry_response(method, response)),
         retry_error_callback=_last_result_or_raise,
         reraise=True,
@@ -57,7 +64,7 @@ async def run_with_retry_async(
             multiplier=config.retry_backoff,
             max=config.retry_max_backoff,
         ),
-        retry=retry_if_exception_type(httpx.TransportError)
+        retry=retry_if_exception(lambda exc: should_retry_exception(method, exc))
         | retry_if_result(lambda response: should_retry_response(method, response)),
         retry_error_callback=_last_result_or_raise,
         reraise=True,
