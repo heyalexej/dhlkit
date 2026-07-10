@@ -1,12 +1,27 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
+import httpx
 import pytest
 
 from dhlkit import DhlConfig, DhlConfigError
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture
+def token_response() -> Callable[..., httpx.Response]:
+    """Factory for the fake ROPC token endpoint reply used across the auth tests."""
+
+    def make(access_token: str = "token", *, expires_in: int = 1800) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={"access_token": access_token, "token_type": "Bearer", "expires_in": expires_in},
+        )
+
+    return make
 
 
 @pytest.fixture

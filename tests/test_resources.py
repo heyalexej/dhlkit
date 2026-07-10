@@ -9,19 +9,12 @@ from dhlkit import AsyncDhlClient, DhlClient, InMemoryTokenCache
 from dhlkit.generated.models.pickup import PickupOrder
 
 
-def _token_response() -> httpx.Response:
-    return httpx.Response(
-        200,
-        json={"access_token": "token", "token_type": "Bearer", "expires_in": 1800},
-    )
-
-
-def test_pickup_create_from_model_sends_expected_wire_body(config) -> None:
+def test_pickup_create_from_model_sends_expected_wire_body(config, token_response) -> None:
     sent: dict = {}
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/token"):
-            return _token_response()
+            return token_response()
         nonlocal sent
         sent = json.loads(request.content)
         return httpx.Response(200, json={})
@@ -43,10 +36,10 @@ def test_pickup_create_from_model_sends_expected_wire_body(config) -> None:
     assert sent["shipmentDetails"]["shipments"] == [{"transportationType": "PAKET"}]
 
 
-def test_pickup_locations_are_typed(config, fixture_bytes) -> None:
+def test_pickup_locations_are_typed(config, fixture_bytes, token_response) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/token"):
-            return _token_response()
+            return token_response()
         assert request.url.params["postalCode"] == "53113"
         return httpx.Response(
             200,
@@ -64,10 +57,10 @@ def test_pickup_locations_are_typed(config, fixture_bytes) -> None:
     assert locations[0].pickup_address.city.root == "Bonn"
 
 
-def test_postnumber_412_is_typed_negative_result(config) -> None:
+def test_postnumber_412_is_typed_negative_result(config, token_response) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/token"):
-            return _token_response()
+            return token_response()
         return httpx.Response(412, json={"valid": False})
 
     with httpx.Client(transport=httpx.MockTransport(handler)) as http_client:
@@ -124,10 +117,10 @@ def test_legacy_limits_batch_size(config) -> None:
 
 
 @pytest.mark.anyio
-async def test_async_postnumber(config, fixture_bytes) -> None:
+async def test_async_postnumber(config, fixture_bytes, token_response) -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/token"):
-            return _token_response()
+            return token_response()
         return httpx.Response(
             200,
             content=fixture_bytes("postnumber.json"),

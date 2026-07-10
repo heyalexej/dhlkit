@@ -73,16 +73,13 @@ class _CountingCache:
         self._inner.clear(key)
 
 
-def test_ropc_memoizes_token_and_skips_cache_reads(config) -> None:
+def test_ropc_memoizes_token_and_skips_cache_reads(config, token_response) -> None:
     mints = 0
 
     def handler(request: httpx.Request) -> httpx.Response:
         nonlocal mints
         mints += 1
-        return httpx.Response(
-            200,
-            json={"access_token": f"token-{mints}", "token_type": "Bearer", "expires_in": 1800},
-        )
+        return token_response(f"token-{mints}")
 
     cache = _CountingCache()
     auth = RopcBearerAuth(config, cache, clock=lambda: 100.0)
@@ -94,19 +91,14 @@ def test_ropc_memoizes_token_and_skips_cache_reads(config) -> None:
     assert cache.gets <= 2  # only probed on the cold mint; the in-memory memo serves the rest
 
 
-def test_ropc_cache_and_expiry(config) -> None:
+def test_ropc_cache_and_expiry(config, token_response) -> None:
     now = [100.0]
     token_requests = 0
 
     def handler(request: httpx.Request) -> httpx.Response:
         nonlocal token_requests
         token_requests += 1
-        payload = {
-            "access_token": f"token-{token_requests}",
-            "token_type": "Bearer",
-            "expires_in": 1800,
-        }
-        return httpx.Response(200, json=payload)
+        return token_response(f"token-{token_requests}")
 
     auth = RopcBearerAuth(config, InMemoryTokenCache(), clock=lambda: now[0])
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
