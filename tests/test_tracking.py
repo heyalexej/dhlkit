@@ -3,11 +3,11 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from dhlkit import DhlClient, InMemoryTokenCache
+from dhlkit import AsyncDhlClient, DhlClient, InMemoryTokenCache
 from dhlkit.errors import DhlAPIError
 from dhlkit.generated.models.tracking_unified import TrackingShipments
+from dhlkit.resources.tracking import _from_legacy, _from_unified
 from dhlkit.resources.tracking_legacy import LegacyTrackingResult
-from dhlkit.unified import _from_legacy, _from_unified, track
 
 
 def test_normalizes_unified_fixture(fixture_bytes) -> None:
@@ -76,7 +76,7 @@ def test_track_prefer_legacy_reraises_error_without_calling_unified(config) -> N
     with httpx.Client(transport=httpx.MockTransport(handler)) as http_client:
         dhl = DhlClient(config, http_client=http_client, token_cache=InMemoryTokenCache())
         with pytest.raises(DhlAPIError):
-            track(dhl, "00340434780401935407", prefer="legacy", fallback=False)
+            dhl.tracking.track("00340434780401935407", prefer="legacy", fallback=False)
 
 
 def test_track_prefer_legacy_falls_back_to_unified_on_error(config, fixture_bytes) -> None:
@@ -95,9 +95,28 @@ def test_track_prefer_legacy_falls_back_to_unified_on_error(config, fixture_byte
 
     with httpx.Client(transport=httpx.MockTransport(handler)) as http_client:
         dhl = DhlClient(config, http_client=http_client, token_cache=InMemoryTokenCache())
-        result = track(dhl, "00340434780401935407", prefer="legacy", fallback=True)
+        result = dhl.tracking.track("00340434780401935407", prefer="legacy", fallback=True)
 
     assert result.source == "unified"
+
+
+@pytest.mark.anyio
+async def test_async_track_prefers_legacy_without_calling_unified(config, fixture_bytes) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if "/tracking/v0/" in request.url.path:
+            return httpx.Response(
+                200,
+                content=fixture_bytes("tracking_legacy_single.xml"),
+                headers={"content-type": "application/xml"},
+            )
+        raise AssertionError("unified must not be called when legacy succeeds")
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+        dhl = AsyncDhlClient(config, http_client=http_client, token_cache=InMemoryTokenCache())
+        result = await dhl.tracking.track("00340434780401935407", prefer="legacy")
+
+    assert result.source == "legacy"
+    assert result.status_code == "AA"
 
 
 def test_live_fixture_sanitizer_removes_embedded_tracking_ids() -> None:
