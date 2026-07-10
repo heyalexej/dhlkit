@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from .client import AsyncDhlClient, DhlClient
+from .client import DhlClient
 from .errors import DhlError
 from .generated.models.tracking_unified import TrackingShipment, TrackingShipments
 from .models import DhlModel
@@ -56,39 +56,6 @@ def track(
         if not fallback:
             raise
     return _from_unified(client.tracking.unified(tracking_number), tracking_number)
-
-
-async def track_async(
-    client: AsyncDhlClient,
-    tracking_number: str,
-    *,
-    prefer: Literal["legacy", "unified"] = "legacy",
-    fallback: bool = True,
-) -> TrackingResult:
-    """Asynchronous counterpart of :func:`track`."""
-    if prefer == "unified":
-        try:
-            return _from_unified(await client.tracking.unified(tracking_number), tracking_number)
-        except DhlError:
-            if not fallback:
-                raise
-            legacy = _from_legacy(
-                await client.tracking.legacy(tracking_number),
-                tracking_number,
-            )
-            return legacy or TrackingResult(
-                tracking_number=tracking_number,
-                source="legacy",
-                events=[],
-            )
-    try:
-        result = _from_legacy(await client.tracking.legacy(tracking_number), tracking_number)
-        if result is not None:
-            return result
-    except DhlError:
-        if not fallback:
-            raise
-    return _from_unified(await client.tracking.unified(tracking_number), tracking_number)
 
 
 def _from_legacy(result: LegacyTrackingResult, tracking_number: str) -> TrackingResult | None:

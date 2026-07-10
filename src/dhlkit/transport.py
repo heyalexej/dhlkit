@@ -214,8 +214,6 @@ def _body_kwargs(body: Any) -> dict[str, Any]:
         return {}
     if isinstance(body, BaseModel):
         return {"json": body.model_dump(by_alias=True, exclude_none=True)}
-    if isinstance(body, bytes | bytearray | memoryview | str):
-        return {"content": body}
     return {"json": body}
 
 
@@ -237,7 +235,7 @@ def _handle_response(
         return response_parser(response.content)
     content_type = response.headers.get("content-type", "")
     if "json" not in content_type:
-        return response.text if response_model is str else response.content
+        return response.content
     payload = orjson.loads(response.content)
     if response_model is None:
         return payload
