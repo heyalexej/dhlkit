@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dhlkit._gen import ROOT, _model_only_spec, _resolve_enum_repr_defaults
+from gen_models import ROOT, _model_only_spec, _resolve_enum_repr_defaults
+
 from dhlkit.generated.models.tracking_unified import (
     Company,
     Organization,
