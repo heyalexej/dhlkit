@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
+
 import httpx
 import pytest
 
 from dhlkit import AsyncDhlClient, DhlClient, InMemoryTokenCache
+from dhlkit.generated.models.pickup import PickupOrder
 
 
 def _token_response() -> httpx.Response:
@@ -11,6 +14,33 @@ def _token_response() -> httpx.Response:
         200,
         json={"access_token": "token", "token_type": "Bearer", "expires_in": 1800},
     )
+
+
+def test_pickup_create_from_model_sends_expected_wire_body(config) -> None:
+    sent: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/token"):
+            return _token_response()
+        nonlocal sent
+        sent = json.loads(request.content)
+        return httpx.Response(200, json={})
+
+    order = PickupOrder.model_validate(
+        {
+            "customerDetails": {"billingNumber": "123456789012AB"},
+            "pickupLocation": {"type": "Id", "asId": "AS1234567890"},
+            "pickupDetails": {"pickupDate": {"type": "ASAP"}},
+            "shipmentDetails": {"shipments": [{"transportationType": "PAKET"}]},
+        }
+    )
+    with httpx.Client(transport=httpx.MockTransport(handler)) as http_client:
+        dhl = DhlClient(config, http_client=http_client, token_cache=InMemoryTokenCache())
+        dhl.pickup.create(order)
+
+    assert sent["pickupLocation"] == {"type": "Id", "asId": "AS1234567890"}
+    assert sent["customerDetails"]["billingNumber"] == "123456789012AB"
+    assert sent["shipmentDetails"]["shipments"] == [{"transportationType": "PAKET"}]
 
 
 def test_pickup_locations_are_typed(config, fixture_bytes) -> None:
