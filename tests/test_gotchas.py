@@ -10,20 +10,13 @@ from dhlkit import DhlClient, InMemoryTokenCache
 from dhlkit.auth import RopcBearerAuth
 
 
-def _token() -> httpx.Response:
-    return httpx.Response(
-        200,
-        json={"access_token": "bearer-token", "token_type": "Bearer", "expires_in": 1800},
-    )
-
-
-def test_postnumber_uses_post_not_get(config, fixture_bytes) -> None:
+def test_postnumber_uses_post_not_get(config, fixture_bytes, token_response) -> None:
     """Regression for docs/AUTH.md; POST→200 while GET→401, verified 2026-07-09."""
     resource_methods: list[str] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/token"):
-            return _token()
+            return token_response("bearer-token")
         resource_methods.append(request.method)
         return httpx.Response(
             200,
@@ -87,14 +80,14 @@ def test_legacy_tracking_gkp_creds_in_xml(config, fixture_bytes) -> None:
     assert seen.headers["DHL-API-Key"] == "test-api-key"
 
 
-def test_pickup_location_type_id_and_asid(config) -> None:
+def test_pickup_location_type_id_and_asid(config, token_response) -> None:
     """Regression for docs/AUTH.md; location is type=Id + asId, verified 2026-07-09."""
     payload: dict[str, Any] = {}
 
     def handler(request: httpx.Request) -> httpx.Response:
         nonlocal payload
         if request.url.path.endswith("/token"):
-            return _token()
+            return token_response("bearer-token")
         payload = json.loads(request.content)
         return httpx.Response(200, json={})
 
@@ -132,14 +125,14 @@ def test_unified_apikey_header_lowercase(config, fixture_bytes) -> None:
     assert b"DHL-API-Key" not in raw_names
 
 
-def test_no_bearer_and_apikey_together(config, fixture_bytes) -> None:
+def test_no_bearer_and_apikey_together(config, fixture_bytes, token_response) -> None:
     """Regression for docs/AUTH.md; gateway requires one auth scheme, verified 2026-07-09."""
     resource_headers: httpx.Headers | None = None
 
     def handler(request: httpx.Request) -> httpx.Response:
         nonlocal resource_headers
         if request.url.path.endswith("/token"):
-            return _token()
+            return token_response("bearer-token")
         resource_headers = request.headers
         return httpx.Response(
             200,
@@ -156,7 +149,7 @@ def test_no_bearer_and_apikey_together(config, fixture_bytes) -> None:
     assert "dhl-api-key" not in resource_headers
 
 
-def test_ropc_token_reused_until_expiry(config) -> None:
+def test_ropc_token_reused_until_expiry(config, token_response) -> None:
     """Regression for docs/AUTH.md; token TTL reuse was verified 2026-07-09."""
     now = [0.0]
     calls = 0
@@ -164,10 +157,7 @@ def test_ropc_token_reused_until_expiry(config) -> None:
     def handler(_request: httpx.Request) -> httpx.Response:
         nonlocal calls
         calls += 1
-        return httpx.Response(
-            200,
-            json={"access_token": f"token-{calls}", "token_type": "Bearer", "expires_in": 1800},
-        )
+        return token_response(f"token-{calls}")
 
     auth = RopcBearerAuth(config, InMemoryTokenCache(), clock=lambda: now[0])
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:

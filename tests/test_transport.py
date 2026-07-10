@@ -7,7 +7,7 @@ from dhlkit import DhlClient, DhlTransportError, InMemoryTokenCache
 from dhlkit.retry import should_retry_exception
 
 
-def test_bearer_refreshes_once_on_401(config, fixture_bytes) -> None:
+def test_bearer_refreshes_once_on_401(config, fixture_bytes, token_response) -> None:
     token_calls = 0
     resource_tokens: list[str] = []
 
@@ -15,14 +15,7 @@ def test_bearer_refreshes_once_on_401(config, fixture_bytes) -> None:
         nonlocal token_calls
         if request.url.path.endswith("/token"):
             token_calls += 1
-            return httpx.Response(
-                200,
-                json={
-                    "access_token": f"token-{token_calls}",
-                    "token_type": "Bearer",
-                    "expires_in": 1800,
-                },
-            )
+            return token_response(f"token-{token_calls}")
         resource_tokens.append(request.headers["Authorization"])
         if request.headers["Authorization"] == "Bearer token-1":
             return httpx.Response(401, json={"title": "Unauthorized"})
@@ -72,17 +65,14 @@ def test_should_retry_exception_gates_transport_errors_by_method() -> None:
     assert should_retry_exception("GET", ValueError("not a transport error")) is False
 
 
-def test_transport_error_not_retried_for_non_idempotent_post(config) -> None:
+def test_transport_error_not_retried_for_non_idempotent_post(config, token_response) -> None:
     config = config.model_copy(update={"max_retries": 2, "retry_backoff": 0})
     post_calls = 0
 
     def handler(request: httpx.Request) -> httpx.Response:
         nonlocal post_calls
         if request.url.path.endswith("/token"):
-            return httpx.Response(
-                200,
-                json={"access_token": "t", "token_type": "Bearer", "expires_in": 1800},
-            )
+            return token_response("t")
         post_calls += 1
         raise httpx.ReadTimeout("timeout", request=request)
 
