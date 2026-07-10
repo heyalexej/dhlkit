@@ -163,12 +163,12 @@ def _pickup_order(
     order: PickupOrder | Mapping[str, Any],
     *,
     as_id: str | None,
-) -> PickupOrder:
-    payload = (
-        order.model_dump(by_alias=True, exclude_none=True)
-        if isinstance(order, PickupOrder)
-        else dict(order)
-    )
+) -> dict[str, Any]:
+    """Return the wire-ready JSON body; the transport sends plain dicts as ``json=``."""
+    if isinstance(order, PickupOrder):
+        payload = order.model_dump(by_alias=True, exclude_none=True)
+    else:
+        payload = dict(order)
     location = dict(payload.get("pickupLocation") or payload.get("pickup_location") or {})
     if as_id is not None:
         location["asId"] = as_id
@@ -181,4 +181,8 @@ def _pickup_order(
         location.pop("id", None)
         payload.pop("pickup_location", None)
         payload["pickupLocation"] = location
-    return PickupOrder.model_validate(payload)
+    if isinstance(order, PickupOrder):
+        # Already validated on construction; the dump above is the wire body.
+        return payload
+    # Validate a caller-supplied mapping client-side, then hand back the wire dict.
+    return PickupOrder.model_validate(payload).model_dump(by_alias=True, exclude_none=True)
