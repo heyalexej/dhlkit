@@ -7,7 +7,6 @@ import time
 from collections.abc import Callable
 
 import httpx
-import orjson
 
 from dhlkit.auth.cache import CachedToken, TokenCache
 from dhlkit.config import DhlConfig
@@ -101,8 +100,8 @@ class RopcBearerAuth:
         try:
             from dhlkit.generated.models.auth import TokenResponse
 
-            payload = TokenResponse.model_validate(orjson.loads(response.content))
-        except (ValueError, orjson.JSONDecodeError) as exc:
+            payload = TokenResponse.model_validate_json(response.content)
+        except ValueError as exc:
             raise DhlAuthError("DHL token response was not valid JSON") from exc
         access_token = payload.access_token
         if not access_token:

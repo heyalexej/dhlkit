@@ -18,7 +18,7 @@ def test_paginate_follows_next_url() -> None:
             )
         return TrackingShipments.model_validate({"shipments": [{"id": "two"}]})
 
-    items = list(paginate(method))
+    items = list(paginate(method, items_field="shipments"))
 
     assert [item.id for item in items] == ["one", "two"]
     assert offsets == [None, "1"]

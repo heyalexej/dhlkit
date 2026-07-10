@@ -10,11 +10,16 @@ from pydantic import BaseModel
 def paginate(
     method: Callable[..., Any],
     *args: Any,
-    items_field: str = "shipments",
+    items_field: str,
     max_items: int | None = None,
     **kwargs: Any,
 ) -> Iterator[Any]:
-    """Yield items from offset-based DHL responses until ``nextUrl`` is absent."""
+    """Yield ``items_field`` entries across offset-based pages until ``nextUrl`` is absent.
+
+    ``items_field`` is required: it names the list attribute on each page (for
+    Unified Tracking that is ``"shipments"``) and has no endpoint-specific default,
+    so a wrong field fails loudly rather than yielding nothing.
+    """
     yielded = 0
     while True:
         page = method(*args, **kwargs)
@@ -31,11 +36,11 @@ def paginate(
 async def paginate_async(
     method: Callable[..., Awaitable[Any]],
     *args: Any,
-    items_field: str = "shipments",
+    items_field: str,
     max_items: int | None = None,
     **kwargs: Any,
 ) -> AsyncIterator[Any]:
-    """Asynchronous counterpart of :func:`paginate`."""
+    """Asynchronous counterpart of :func:`paginate`; ``items_field`` is required."""
     yielded = 0
     while True:
         page = await method(*args, **kwargs)
