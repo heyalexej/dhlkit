@@ -57,6 +57,43 @@ async def test_apikey_auth_sync_and_async_headers_match(config) -> None:
     assert sync_headers == async_headers == {"dhl-api-key": "test-api-key"}
 
 
+class _CountingCache:
+    def __init__(self) -> None:
+        self._inner = InMemoryTokenCache()
+        self.gets = 0
+
+    def get(self, key: str) -> CachedToken | None:
+        self.gets += 1
+        return self._inner.get(key)
+
+    def set(self, key: str, token: CachedToken) -> None:
+        self._inner.set(key, token)
+
+    def clear(self, key: str) -> None:
+        self._inner.clear(key)
+
+
+def test_ropc_memoizes_token_and_skips_cache_reads(config) -> None:
+    mints = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal mints
+        mints += 1
+        return httpx.Response(
+            200,
+            json={"access_token": f"token-{mints}", "token_type": "Bearer", "expires_in": 1800},
+        )
+
+    cache = _CountingCache()
+    auth = RopcBearerAuth(config, cache, clock=lambda: 100.0)
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        for _ in range(5):
+            assert auth.headers(client)["Authorization"] == "Bearer token-1"
+
+    assert mints == 1  # token minted once
+    assert cache.gets <= 2  # only probed on the cold mint; the in-memory memo serves the rest
+
+
 def test_ropc_cache_and_expiry(config) -> None:
     now = [100.0]
     token_requests = 0
