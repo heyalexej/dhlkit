@@ -70,7 +70,11 @@ def test_unified_tracking_query_is_typed(config, fixture_bytes) -> None:
     assert seen is not None
     assert seen.url.params["service"] == "parcel-de"
     assert seen.url.params["language"] == "de"
-    assert result.shipments[0].status.status_code.root == "transit"
+    shipments = result.shipments
+    assert shipments is not None
+    status = shipments[0].status
+    assert status is not None
+    assert status.status_code.root == "transit"
 
 
 def test_pickup_get_requires_selector(config) -> None:

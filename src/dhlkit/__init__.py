@@ -11,6 +11,7 @@ from .errors import (
     DhlTransportError,
 )
 from .pagination import paginate, paginate_async
+from .resources import TrackingEvent, TrackingResult
 
 __all__ = [
     "AsyncDhlClient",
@@ -26,6 +27,8 @@ __all__ = [
     "FileTokenCache",
     "InMemoryTokenCache",
     "TokenCache",
+    "TrackingEvent",
+    "TrackingResult",
     "paginate",
     "paginate_async",
 ]

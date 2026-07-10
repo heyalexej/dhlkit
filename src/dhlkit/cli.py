@@ -8,7 +8,6 @@ from rich.table import Table
 
 from .client import DhlClient
 from .config import DhlConfig
-from .unified import track as normalized_track
 
 app = typer.Typer(help="Typed DHL Parcel DE command-line client")
 console = Console()
@@ -44,8 +43,7 @@ def postnumber(postnumber: str, firstname: str, lastname: str) -> None:
 def track(tracking_number: str, unified: bool = False) -> None:
     """Track one shipment and print a normalized, secret-free result."""
     with DhlClient(_config()) as dhl:
-        result = normalized_track(
-            dhl,
+        result = dhl.tracking.track(
             tracking_number,
             prefer="unified" if unified else "legacy",
         )
