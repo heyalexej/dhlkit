@@ -68,6 +68,60 @@ def test_missing_secret_names_environment_variable(
         DhlConfig().require_api_key()
 
 
+def _write_credential_file(path, api_key: str) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "api_key": api_key,
+                "api_secret": "secret",
+                "gkp_user": "user",
+                "gkp_password": "password",
+            }
+        )
+    )
+    path.chmod(0o600)
+
+
+def test_resolve_prefers_complete_environment(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    monkeypatch.chdir(tmp_path)  # avoid a repo-local .env
+    monkeypatch.setenv("DHL_API_KEY", "env-key")
+    monkeypatch.setenv("DHL_API_SECRET", "secret")
+    monkeypatch.setenv("DHL_GKP_USER", "user")
+    monkeypatch.setenv("DHL_GKP_PASSWORD", "password")
+    path = tmp_path / "config.json"
+    _write_credential_file(path, api_key="file-key")
+
+    config = DhlConfig.resolve(path)
+
+    assert config.require_api_key() == "env-key"  # complete env wins over the file
+
+
+def test_resolve_falls_back_to_file_when_env_incomplete(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    for name in ("DHL_API_KEY", "DHL_API_SECRET", "DHL_GKP_USER", "DHL_GKP_PASSWORD"):
+        monkeypatch.delenv(name, raising=False)
+    path = tmp_path / "config.json"
+    _write_credential_file(path, api_key="file-key")
+
+    config = DhlConfig.resolve(path)
+
+    assert config.require_api_key() == "file-key"
+
+
+def test_resolve_raises_on_unreadable_file(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    monkeypatch.chdir(tmp_path)
+    for name in ("DHL_API_KEY", "DHL_API_SECRET", "DHL_GKP_USER", "DHL_GKP_PASSWORD"):
+        monkeypatch.delenv(name, raising=False)
+    path = tmp_path / "config.json"
+    path.write_text("{}")
+    path.chmod(0o644)  # a present but unreadable file must not be silently ignored
+
+    with pytest.raises(DhlConfigError, match="0600"):
+        DhlConfig.resolve(path)
+
+
 def test_base_url_override_applies_to_all_resources() -> None:
     config = DhlConfig(base_url="https://example.test/")
 

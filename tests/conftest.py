@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
 
-from dhlkit import DhlConfig
+from dhlkit import DhlConfig, DhlConfigError
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -46,19 +45,8 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 
 
 def _live_credentials_available() -> bool:
-    if all(os.getenv(name) for name in _credential_names()):
-        return True
     try:
-        config = DhlConfig.from_file()
-    except Exception:
+        config = DhlConfig.resolve()
+    except DhlConfigError:
         return False
     return all((config.api_key, config.api_secret, config.gkp_user, config.gkp_password))
-
-
-def _credential_names() -> tuple[str, ...]:
-    return (
-        "DHL_API_KEY",
-        "DHL_API_SECRET",
-        "DHL_GKP_USER",
-        "DHL_GKP_PASSWORD",
-    )

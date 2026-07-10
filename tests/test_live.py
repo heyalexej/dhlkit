@@ -12,9 +12,7 @@ pytestmark = pytest.mark.live
 
 @pytest.fixture
 def live_config() -> DhlConfig:
-    if all(os.getenv(name) for name in _credential_names()):
-        return DhlConfig.from_env()
-    return DhlConfig.from_file()
+    return DhlConfig.resolve()
 
 
 @pytest.fixture
@@ -66,12 +64,3 @@ def _tracking_numbers() -> list[str]:
         if numbers:
             return numbers
     return ["00340434780401935407"]
-
-
-def _credential_names() -> tuple[str, ...]:
-    return (
-        "DHL_API_KEY",
-        "DHL_API_SECRET",
-        "DHL_GKP_USER",
-        "DHL_GKP_PASSWORD",
-    )
