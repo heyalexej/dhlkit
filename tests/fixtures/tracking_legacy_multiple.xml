@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<data name="pieceshipmentlist" request-id="fixture-multiple" code="0">
+  <data
+    name="pieceshipment"
+    error-status="0"
+    piece-id="piece-1"
+    piece-code="00340434780401935407"
+    status-timestamp="09.07.2026 12:30"
+    status="The shipment is in transit."
+    short-status="In transit"
+    delivery-event-flag="0" />
+  <data name="pieceeventlist" piece-id="piece-1">
+    <data
+      name="pieceevent"
+      event-timestamp="09.07.2026 08:00"
+      event-status="Shipment data received."
+      event-text="Shipment data received."
+      standard-event-code="VA" />
+    <data
+      name="pieceevent"
+      event-timestamp="09.07.2026 12:30"
+      event-status="The shipment is in transit."
+      event-text="Processed in the origin parcel center."
+      standard-event-code="AA" />
+  </data>
+</data>

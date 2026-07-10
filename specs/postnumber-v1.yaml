@@ -1,0 +1,247 @@
+openapi: 3.0.1
+info:
+  title: DHL Parcel DE Postnumber API
+  description: "This is the specification of the DP-DHL Group Parcel DE Postnumber\
+    \ API. This web service allows business customers a verification of a postnumber.\
+    \ [https://developer.dhl.com/api-reference/dhl-paket-de-postnummern-post-paket-deutschland](https://developer.dhl.com/api-reference/dhl-paket-de-postnummern-post-paket-deutschland) "
+  contact:
+    name: Deutsche Post DHL
+    url: >-
+      https://developer.dhl.com/post-und-dhl-deutschland
+  license:
+    name: License
+    url: https://www.dhl.de
+  version: 1.0.1
+servers:
+- url: https://api-sandbox.dhl.com/parcel/de/account/postnumber/v1
+  description: Sandbox Environment (Customer Testing)
+- url: https://api-eu.dhl.com/parcel/de/account/postnumber/v1
+  description: Production Environment
+security:
+- BasicAuth: []
+- ApiKey: []
+tags:
+    - name: Postnumbers
+      description: Verify valid address data due to given postnumber and customer name 
+paths:
+  /customers/{postnumber}:
+    post:
+      tags:
+      - Postnumbers
+      summary: Verify postnumber for given first- and lastname
+      description: >-
+        Validate postnumbers to ensure deliverability of shipments to the corresponding person at Packstation parcel lockers.
+      operationId: findPostnumber
+      parameters:
+      - name: postnumber
+        in: path
+        description: The customer postnumber.
+        required: true
+        schema:
+          type: integer
+          format: int64
+          example: 800000036
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostnumberRequest'
+            example:
+              firstname: Max 
+              lastname: Mustermann 
+        description: Pass the customer data belonging to the given postnumber
+        required: true
+      responses:
+        "200":
+          $ref: '#/components/responses/200'
+        "403":
+          $ref: '#/components/responses/403'
+        "429":
+          $ref: '#/components/responses/429'
+        "412":
+          $ref: '#/components/responses/412'
+        "401":
+          $ref: '#/components/responses/401'
+        "400":
+          $ref: '#/components/responses/400'
+components:
+  schemas:
+    PostnumberRequest:
+      required:
+      - firstname
+      - lastname
+      type: object
+      description: Request to verify postnumber for given first- and lastname
+      properties:
+        firstname:
+          maxLength: 40
+          minLength: 1
+          pattern: "[ \\',\\-./\\\\A-Za-z_`¯µ·ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæ\
+            çèéêëìíîïðñòóôõöøùúûüýþÿ]*"
+          type: string
+          description: first name
+          example: Max
+        lastname:
+          maxLength: 32
+          minLength: 1
+          pattern: "[ \\',\\-./\\\\A-Za-z_`¯µ·ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæ\
+            çèéêëìíîïðñòóôõöøùúûüýþÿ]*"
+          type: string
+          description: last name
+          example: Mustermann
+      example:
+        firstname: Max 
+        lastname: Mustermann 
+    PostnumberResponse:
+      required:
+      - valid
+      type: object
+      description: Response for postnumber validation
+      properties:
+        valid:
+          type: boolean
+          description: "Shows the validity of the number (true = valid, entire name\
+            \ matches & postnumber matches & service Packstation is active; false\
+            \ = not valid)."
+          example: true
+          enum:
+          - true
+          - false
+        details:
+          "$ref": "#/components/schemas/PostNumberResponseDetails"
+      example:
+        valid: false
+    PostNumberResponseDetails:
+      required:
+      - postNumberValid
+      type: object
+      description: Detailed response of postnumber validation
+      properties:
+        postNumberValid:
+          type: boolean
+          description: Shows the validity of the number (true = valid,\
+            \ postnumber exists & service Packstation is active; false = not valid).
+          example: true
+          enum:
+            - true
+            - false
+        nameValid:
+          type: boolean
+          description: Shows the validity of the name (true = valid,\
+            \ name matches with our customer data; false = not valid).
+          example: true
+          enum:
+            - true
+            - false
+      example:
+        postNumberValid: true
+        nameValid: false
+    JSONStatus:
+      required:
+      - status
+      - title
+      type: object
+      properties:
+        title:
+          type: string
+          example: Unauthorized
+        status:
+          maximum: 999
+          minimum: 200
+          type: integer
+          format: int32
+          example: 401
+        type:
+          type: string
+          description: "A URI reference [RFC3986] that identifies the problem type\
+            \ and is human-readable."
+          format: uri
+          example: https://api.dhl.com/parcel/de/shipping/e0001.html
+        detail:
+          maxLength: 80
+          minLength: 0
+          type: string
+          description: A human-readable explanation specific to this occurrence of
+            the problem
+          example: Unauthorized - The client could not be authenticated.
+        instance:
+          type: string
+          description: A URI reference that identifies the specific occurrence of
+            the problem.
+          format: uri
+          example: https://api.dhl.com/parcel/de/shipping/e0001.html
+      description: JSON Status object included in response object
+      example:
+        title: Unauthorized
+        status: 401
+        detail: Unauthorized - The client could not be authenticated.
+  responses:
+    "200":
+      description: The customer address was valid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PostnumberResponse'
+          example:
+            valid: true
+    "400":
+      description: "400 JSON error per RFC 7807 (https://tools.ietf.org/html/rfc7807)."
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JSONStatus'
+          example:
+            title: Bad Request
+            status: 400
+            detail: Bad Request - The request could not be understood 
+              due to malformed syntax.
+    "401":
+      description: "401 JSON error per RFC 7807 (https://tools.ietf.org/html/rfc7807)."
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JSONStatus'
+          example:
+            title: Unauthorized
+            status: 401
+            detail: Unauthorized - The client could not be authenticated.
+    "403":
+      description: "403 JSON error per RFC 7807 (https://tools.ietf.org/html/rfc7807)."
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JSONStatus'
+          example:
+            title: Forbidden
+            status: 403
+            detail: Forbidden - The client is not authorized for the particular request.
+    "412":
+      description: "412 JSON error per RFC 7807 (https://tools.ietf.org/html/rfc7807)."
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PostnumberResponse'
+          example:
+            valid: false
+    "429":
+      description: "429 JSON error per RFC 7807 (https://tools.ietf.org/html/rfc7807)."
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JSONStatus'
+          example:
+            title: Too Many Requests
+            status: 429
+            detail: Too Many Requests for client and given ressource.
+  securitySchemes:
+    BasicAuth:
+      type: http
+      description: Basic authentication coordinated with employees of the post and
+        parcel germany.
+      scheme: basic
+    ApiKey:
+      type: apiKey
+      description: "API key to authorize requests. API key can be obtained at [DHL's\
+        \ development portal](https://developer.dhl.com)."
+      name: dhl-api-key
+      in: header

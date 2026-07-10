@@ -1,0 +1,13 @@
+[
+  {
+    "id": "AS1234567890",
+    "pickupAddress": {
+      "name1": "Example Warehouse",
+      "addressStreet": "Example Street",
+      "addressHouse": "1",
+      "postalCode": "53113",
+      "city": "Bonn",
+      "country": "DE"
+    }
+  }
+]

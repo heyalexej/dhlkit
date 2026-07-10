@@ -1,0 +1,34 @@
+{
+  "shipments": [
+    {
+      "id": "00340434780401935407",
+      "service": "parcel-de",
+      "status": {
+        "timestamp": "2026-07-09T12:30:00+02:00",
+        "statusCode": "transit",
+        "status": "In transit",
+        "description": "The shipment is moving through the parcel network."
+      },
+      "events": [
+        {
+          "timestamp": "2026-07-09T08:00:00+02:00",
+          "statusCode": "pre-transit",
+          "status": "Announced",
+          "description": "Shipment data received."
+        },
+        {
+          "timestamp": "2026-07-09T12:30:00+02:00",
+          "statusCode": "transit",
+          "status": "In transit",
+          "description": "Processed in the origin parcel center.",
+          "location": {
+            "address": {
+              "addressLocality": "Bonn",
+              "countryCode": "DE"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

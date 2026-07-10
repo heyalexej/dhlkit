@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<data name="pieceshipmentlist" request-id="fixture-single" code="0">
+  <data
+    name="pieceshipment"
+    error-status="0"
+    piece-id="piece-1"
+    piece-identifier="340434780401935407"
+    piece-code="00340434780401935407"
+    searched-piece-code="00340434780401935407"
+    status-timestamp="09.07.2026 12:30"
+    status="The shipment is in transit."
+    short-status="In transit"
+    product-name="DHL PAKET"
+    delivery-event-flag="0" />
+  <data name="pieceeventlist" piece-id="piece-1" piece-identifier="340434780401935407">
+    <data
+      name="pieceevent"
+      event-timestamp="09.07.2026 12:30"
+      event-status="The shipment is in transit."
+      event-text="Processed in the origin parcel center."
+      event-short-status="In transit"
+      ice="LDTMV"
+      ric="MVMTV"
+      event-location="Bonn"
+      event-country="DE"
+      standard-event-code="AA" />
+  </data>
+</data>

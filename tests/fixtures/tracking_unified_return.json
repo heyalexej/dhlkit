@@ -1,0 +1,209 @@
+{
+  "shipments": [
+    {
+      "id": "00340434123456789012",
+      "service": "parcel-de",
+      "origin": {
+        "address": {
+          "countryCode": "DE"
+        }
+      },
+      "destination": {
+        "address": {
+          "countryCode": "ES"
+        }
+      },
+      "status": {
+        "timestamp": "2026-01-06T16:00:00+00:00",
+        "statusCode": "delivered",
+        "status": "ZU",
+        "statusDetailed": "DLVRD_NGHBR_ZU",
+        "description": "The shipment has been successfully delivered",
+        "remark": "The shipment has been successfully delivered",
+        "location": {
+          "address": {
+            "addressLocality": "Example Hub 14"
+          }
+        }
+      },
+      "returnFlag": true,
+      "details": {
+        "product": {
+          "productName": "Shipment for Export"
+        },
+        "totalNumberOfPieces": 1
+      },
+      "events": [
+        {
+          "timestamp": "2026-01-02T08:00:00+00:00",
+          "statusCode": "delivered",
+          "status": "ZU",
+          "statusDetailed": "DLVRD_NGHBR_ZU",
+          "description": "The shipment has been successfully delivered",
+          "remark": "The shipment has been successfully delivered",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 1"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-02T16:00:00+00:00",
+          "statusCode": "transit",
+          "status": "PO",
+          "statusDetailed": "SRTED_NRQRD_PO",
+          "description": "The shipment has been loaded onto the delivery vehicle. Delivery is expected to take place today.",
+          "remark": "The shipment has been loaded onto the delivery vehicle. Delivery is expected to take place today.",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 2"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-03T00:00:00+00:00",
+          "statusCode": "transit",
+          "status": "EE",
+          "statusDetailed": "ULFMV_UNLDD_EE",
+          "description": "The shipment arrived in the region of recipient and will be transported to the delivery base in the next step.",
+          "remark": "The shipment arrived in the region of recipient and will be transported to the delivery base in the next step.",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 3"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-03T08:00:00+00:00",
+          "statusCode": "transit",
+          "status": "AA",
+          "statusDetailed": "LDTMV_MVMTV_AA",
+          "description": "The shipment has been processed in the parcel center of origin",
+          "remark": "The shipment has been processed in the parcel center of origin",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 4"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-03T16:00:00+00:00",
+          "statusCode": "transit",
+          "status": "AA",
+          "statusDetailed": "LDTMV_MVMTV_AA",
+          "description": "The shipment has been processed in the parcel center of origin",
+          "remark": "The shipment has been processed in the parcel center of origin",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 5"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-04T00:00:00+00:00",
+          "statusCode": "transit",
+          "status": "AA",
+          "statusDetailed": "LDTMV_MVMTV_AA",
+          "description": "The shipment has been processed in the parcel center of origin",
+          "remark": "The shipment has been processed in the parcel center of origin",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 6"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-04T08:00:00+00:00",
+          "statusCode": "failure",
+          "status": "ZN",
+          "statusDetailed": "RETRN_CNCNR_ZN",
+          "description": "The recipient is unknown. The shipment is being returned to sender.",
+          "remark": "The recipient is unknown. The shipment is being returned to sender.",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 7"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-04T16:00:00+00:00",
+          "statusCode": "failure",
+          "status": "ZN",
+          "statusDetailed": "NTDEL_CPUNK_ZN",
+          "description": "The shipment could not be delivered because the recipient is unknown.",
+          "remark": "The shipment could not be delivered because the recipient is unknown.",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 8"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-05T00:00:00+00:00",
+          "statusCode": "transit",
+          "status": "PO",
+          "statusDetailed": "LDTMV_MVMTV_PO",
+          "description": "The shipment has been loaded onto the delivery vehicle",
+          "remark": "The shipment has been loaded onto the delivery vehicle",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 9"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-05T08:00:00+00:00",
+          "statusCode": "transit",
+          "status": "EE",
+          "statusDetailed": "ULFMV_OARRV_EE",
+          "description": "The shipment has arrived in the destination country/destination area. (Homepage / online shipment tracking: https://example.invalid/tracking",
+          "remark": "The shipment has arrived in the destination country/destination area. (Homepage / online shipment tracking: https://example.invalid/tracking",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 10"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-05T16:00:00+00:00",
+          "statusCode": "transit",
+          "status": "EE",
+          "statusDetailed": "ULFMV_UNLDD_EE",
+          "description": "The international shipment has been processed in the export parcel center",
+          "remark": "The international shipment has been processed in the export parcel center",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 11"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-06T00:00:00+00:00",
+          "statusCode": "transit",
+          "status": "AA",
+          "statusDetailed": "LDTMV_MVMTV_AA",
+          "description": "The international shipment has been processed in the parcel center of origin",
+          "remark": "The international shipment has been processed in the parcel center of origin",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 12"
+            }
+          }
+        },
+        {
+          "timestamp": "2026-01-06T08:00:00+00:00",
+          "statusCode": "pre-transit",
+          "status": "VA",
+          "statusDetailed": "PARCV_NRQRD_VA",
+          "description": "The instruction data for this shipment have been provided by the sender to DHL electronically",
+          "remark": "The instruction data for this shipment have been provided by the sender to DHL electronically",
+          "location": {
+            "address": {
+              "addressLocality": "Example Hub 13"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

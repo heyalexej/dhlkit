@@ -1,0 +1,264 @@
+openapi: 3.0.0
+info:
+  version: 2.0.5
+  title:  DHL Parcel Germany Account Authorization API 
+  description: >
+      This API describes how API client can obtain a token which is used to access various Parcel Germany APIs.
+      
+      Using this API is often the first step in making your API call.
+      
+      <p><h3>Preconditions</h3> You will need:
+      
+      
+      * client ID (aka "API Key", obtained when you create an app in developer.dhl.com)
+      
+      * client secret (aka "API Secret", obtained when you create an app in developer.dhl.com)
+      
+      * GKP user name (obtained when setting up your business account with Parcel Germany)
+      
+      * GKP password (obtained when setting up your business account with Parcel Germany)
+      
+      
+      <h3>Technical Information</h3>
+      
+      This uses an implementation of OAuth2 Password Grant (RFC 6749). After successfull usage you will:
+      
+      * have an opaque access token to be used for API calls afterwards 
+      
+      * this token will have an expiration time
+      
+      
+
+servers:
+  - description: Sandbox Environment (Testing and Onboarding)
+    url: https://api-sandbox.dhl.com/parcel/de/account/auth/ropc/v1
+  - description: Production Environment
+    url: https://api-eu.dhl.com/parcel/de/account/auth/ropc/v1
+    
+    
+tags:
+  - name: General
+    description: Common functionality
+  - name: Authentication
+    description: Authentication related calls
+  - name: BusinessOperations
+    description: Regular business calls
+    
+paths:
+  /:
+    summary: general functionality
+    
+    get:
+     description: Returns the current version of the API as major.minor.patch. Supports content negotiation (json and html) and does __not__ require authentication. This can be used as healthcheck or to identify which version of the API is being used. 
+     summary: Return API version
+     operationId: getSemanticVersion
+     tags:
+      - General
+    
+     responses:
+        '200':
+          description: Major, minor, and build number being returned as x.y.z
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  amp:
+                    name: pp-account-auth-ropc
+                    version: v0.9.7
+                    rev: '151'
+                    env: dev
+                properties:
+                  amp:
+                    type: object
+                    properties: 
+                      name: 
+                        type: string 
+                        example: pp-account-auth-ropc
+                      version:
+                        type: string
+                        description: "Sandbox version is >= Prod version"
+                        pattern: '^v\d{1,2}\.\d{1,2}(\.\d{1,2}){0,1}$'
+                        example: 'v1.0.0'
+                      rev: 
+                        type: string
+                        example: '13'
+                      env: 
+                        type: string
+                        example: dev
+                    example:
+                      amp:
+                        name: pp-account-auth-ropc
+                        version: v0.9.7
+                        rev: '151'
+                        env: dev
+
+  /token:
+    post:
+      operationId: DispenseToken
+      summary: Obtains an access token based on the credentials submitted or based on the refresh token.
+      description:  | 
+            The client makes a request to the token endpoint by adding the following parameters 
+            using the application/x-www-form-urlencoded format with a character
+            encoding of UTF-8 in the HTTP request entity-body:
+            
+            * grant_type __REQUIRED__. Must be set to "password".
+            
+            * client_id __REQUIRED__ (aka client_id (api key))
+            
+            * client_secret __REQUIRED__ (aka client_secret)
+            
+            * username __REQUIRED__. The resource owner username. Aka username for business customer portal
+
+            * password __REQUIRED__. The resource owner password. Aka password for business customer portal
+            
+            __Notes__
+            
+            * Returns an opaque access token. Use this as BearerToken where required.
+            * Example values can be used as-is to try out with the sandbox.
+            
+      tags:
+        - Authentication
+      requestBody:
+        description: requestBody payload
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:         
+                  type: string
+                  enum: [password]
+                  example: password
+                username:   
+                  type: string
+                  example: user-valid
+                  description: GKP user name. Required for grant_type=password.
+                password:
+                  type: string
+                  example: SandboxPasswort2023!
+                  description: GKP password. Required for grant_type=password.
+                client_id: 
+                  type: string
+                  example: KH2iQ8YwGYtGs4XUBKaGaiyWBPEZnsRm
+                client_secret:
+                  type: string
+                  example: V8yPDt8GlGlNMRCh
+              required:
+                - grant_type
+                - client_id
+                - client_secret
+                - username
+                - password
+            example:
+              grant_type: password
+              username: user-valid
+              password: SandboxPasswort2023!
+              client_id: KH2iQ8YwGYtGs4XUBKaGaiyWBPEZnsRm
+              client_secret: V8yPDt8GlGlNMRCh
+        
+      responses:
+        '200':
+          description: Contains the bearer token to be used.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              example:
+                access_token: UtN71yyK8y8tuargZzmttyx8Y7Lp
+                token_type: Bearer
+                expires_in: 1799
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        
+  /hello:
+    get:
+      operationId: hello
+      summary: This allows testing of the token and also alternative authentication methods.
+      description:  | 
+            Makes a  token-based authentication request to a test resource.
+            <p><h3>Usage</h3>
+            
+            <h4>Bearer Token</h4>
+            
+            Provide the token which you have obtained above in the HTTP header 'Authorization' as 'Bearer HereGoesMyToken'. On success, some information on the token is returned.
+      tags:
+        - BusinessOperations
+      security:
+        - bearerAuth: []
+        
+      responses:  
+        '200':
+          description: Testcall to check token validity.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              example:
+                accesstoken-info:
+                  expires_in_s: 1693
+                  id_of_app_developer: dpdhl-nonprod@@@bc35a0bd-d5c0-4339-ab0d-d41500d63877
+                gkp-info:
+                  gkp_user_name: User Valid
+                  gkp_scope: customer_specific_information:read vls:admin rosy:admin optima:admin email external profile integration_gateway
+                  gkp_ekp: '5018717062'
+                  accesstoken:
+                    gkp_jwt_token_md5: 94564c57b717096396db9aafb369fa62
+                    gkp_jwt_token_expiry: 2025-12-02 16-47-17
+                  refreshtoken:
+                    gkp_jwt_refresh_token_md5: 74019310a7792875db2668077984d567
+                    gkp_jwt_token_expiry: 2025-12-03 04-17-17
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+components:
+  schemas:
+    TokenResponse:
+      description: tokenresponse
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: Opaque access token to be used for Bearer authentication
+          maxLength: 50
+          example: UtN71yyK8y8tuargZzmttyx8Y7Lp
+        token_type:
+          type: string
+          description: Will be set to 'Bearer'
+          maxLength: 20
+          example: Bearer
+        expires_in:
+          type: integer
+          description: Seconds
+          example: 1799 
+      example:
+        access_token: UtN71yyK8y8tuargZzmttyx8Y7Lp
+        token_type: Bearer
+        expires_in: 1799
+  responses:
+    '400':
+      description: >
+        Bad Request - The request could not be understood by the server due to
+        malformed syntax.
+    '401':
+      description: >
+        Unauthorized - The client could not be authenticated. There are multiple possible reasons for this. This includes bad or missing credentials. The error message should provide additional information.
+    '403':
+      description: >
+        Forbidden - The client has successfully been authenticated but could not
+        be authorized for the particular request.
+  securitySchemes:
+    bearerAuth:            # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      description: Opaque access token obtained via earlier OAuth2 Password grant flow.
+      bearerFormat: Apigee    # optional, arbitrary value for documentation purposes
+
