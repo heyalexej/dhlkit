@@ -10,6 +10,7 @@ from pydantic_xml.element import SearchMode
 
 from dhlkit.auth.base import AuthStrategy
 from dhlkit.config import DhlConfig
+from dhlkit.errors import DhlAPIError
 from dhlkit.models import DhlModel
 from dhlkit.resource import AsyncResource, Resource
 
@@ -207,6 +208,16 @@ def _values(value: str | Sequence[str] | None) -> list[str]:
 
 def _parse_response(content: bytes) -> LegacyTrackingResult:
     root = LegacyXmlNode.from_xml(content)
+    # The v0 service reports request-level failures (e.g. a rejected GKP login)
+    # as HTTP 200 with a nonzero root ``code``; ``code="0"`` is success. Surface
+    # these through DhlError instead of returning an empty, error-masking result.
+    if root.code is not None and root.code != "0":
+        raise DhlAPIError(
+            f"legacy tracking request failed with code {root.code}",
+            status_code=200,
+            title=root.name,
+            detail=root.error_status,
+        )
     event_lists = {
         node.piece_id or node.piece_identifier: node.children
         for node in root.children
